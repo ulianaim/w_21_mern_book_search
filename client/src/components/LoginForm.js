@@ -1,13 +1,14 @@
 // see SignupForm.js for comments
 import React, { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
-
-// import { loginUser } from '../utils/API';
+import { useMutation } from '@apollo/client';
 import { LOGIN_USER } from '../utils/mutations';
 import Auth from '../utils/auth';
 
 const LoginForm = () => {
   const [formState, setFormState] = useState({ email: '', password: '' });
+  const [validated, setValidated] = useState(false); // Add validated state
+  const [showAlert, setShowAlert] = useState(false); // Add showAlert state
   const [login, { error, data }] = useMutation(LOGIN_USER);
 
   // update state based on form input changes
@@ -23,22 +24,33 @@ const LoginForm = () => {
   // submit form
   const handleFormSubmit = async (event) => {
     event.preventDefault();
-    console.log(formState);
-    try {
-      const { data } = await login({
-        variables: { ...formState },
-      });
 
-      Auth.login(data.login.token);
-    } catch (e) {
-      console.error(e);
+    // Add form validation
+    const form = event.currentTarget;
+    if (form.checkValidity() === false) {
+      event.stopPropagation();
     }
 
-    // clear form values
-    setFormState({
-      email: '',
-      password: '',
-    });
+    setValidated(true);
+
+    if (form.checkValidity() === true) {
+      try {
+        const { data } = await login({
+          variables: { ...formState },
+        });
+
+        Auth.login(data.login.token);
+      } catch (e) {
+        console.error(e);
+        setShowAlert(true); // Show an alert for login errors
+      }
+
+      // clear form values
+      setFormState({
+        email: '',
+        password: '',
+      });
+    }
   };
 
   return (
@@ -50,11 +62,11 @@ const LoginForm = () => {
         <Form.Group className='mb-3'>
           <Form.Label htmlFor='email'>Email</Form.Label>
           <Form.Control
-            type='text'
+            type='email' // Change type to 'email' for email input
             placeholder='Your email'
             name='email'
-            onChange={handleInputChange}
-            value={userFormData.email}
+            onChange={handleChange} // Use handleChange for input change
+            value={formState.email} // Change to formState.email
             required
           />
           <Form.Control.Feedback type='invalid'>Email is required!</Form.Control.Feedback>
@@ -66,14 +78,14 @@ const LoginForm = () => {
             type='password'
             placeholder='Your password'
             name='password'
-            onChange={handleInputChange}
-            value={userFormData.password}
+            onChange={handleChange} // Use handleChange for input change
+            value={formState.password} // Change to formState.password
             required
           />
           <Form.Control.Feedback type='invalid'>Password is required!</Form.Control.Feedback>
         </Form.Group>
         <Button
-          disabled={!(userFormData.email && userFormData.password)}
+          disabled={!(formState.email && formState.password)}
           type='submit'
           variant='success'>
           Submit

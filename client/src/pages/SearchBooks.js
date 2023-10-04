@@ -9,8 +9,10 @@ import {
 } from 'react-bootstrap';
 
 import Auth from '../utils/auth';
-import { saveBook, searchGoogleBooks } from '../utils/API';
+import { searchGoogleBooks } from '../utils/API';
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
+import { useMutation } from '@apollo/client'; // Import the useMutation hook
+import { SAVE_BOOK } from '../utils/mutations'; // Import the SAVE_BOOK mutation
 
 const SearchBooks = () => {
   // create state for holding returned google api data
@@ -26,6 +28,8 @@ const SearchBooks = () => {
   useEffect(() => {
     return () => saveBookIds(savedBookIds);
   });
+
+  const [saveBook] = useMutation(SAVE_BOOK); // Use the SAVE_BOOK mutation
 
   // create method to search for books and set state on form submit
   const handleFormSubmit = async (event) => {
@@ -72,9 +76,11 @@ const SearchBooks = () => {
     }
 
     try {
-      const response = await saveBook(bookToSave, token);
+      const { data } = await saveBook({
+        variables: { input: bookToSave },
+      });
 
-      if (!response.ok) {
+      if (!data || !data.saveBook) {
         throw new Error('something went wrong!');
       }
 
