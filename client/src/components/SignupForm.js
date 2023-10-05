@@ -27,36 +27,48 @@ const SignupForm = () => {
   // submit form
   const handleFormSubmit = async (event) => {
     event.preventDefault();
-
+  
     // Add form validation
     const form = event.currentTarget;
     if (form.checkValidity() === false) {
       event.stopPropagation();
     }
-
+  
     setValidated(true);
-
+  
     if (form.checkValidity() === true) {
       try {
+        try{
         const { data } = await addUser({
           variables: { ...formState },
+        
+        });}
+        catch (err) { 
+        console.log(err)
+        }
+      console.log(formState, data)
+        if (data && data.addUser && data.addUser.token) {
+          Auth.login(data.addUser.token);
+        } else {
+          // Handle the case where addUser was not successful
+          setShowAlert(true); // Show an alert for signup errors
+          console.error('User registration failed.');
+        }
+  
+        // clear form values
+        setFormState({
+          username: '',
+          email: '',
+          password: '',
         });
-
-        Auth.login(data.addUser.token);
-      } catch (e) {
-        console.error(e);
+      } catch (error) {
+        // Handle any GraphQL or network errors
+        console.error('GraphQL error:', error);
         setShowAlert(true); // Show an alert for signup errors
       }
-
-      // clear form values
-      setFormState({
-        username: '',
-        email: '',
-        password: '',
-      });
     }
   };
-
+  
   return (
     <>
       <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
